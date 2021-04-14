@@ -1,8 +1,35 @@
 import telebot as tb
 from telebot import types
-from ps_add import add, delete
+from ps_store_ds import add, delete, check
+import schedule
+import time
+from multiprocessing.context import Process
+from flask import Flask, request
+import os
+TOKEN = '1758515314:AAEqq2SHa68K51OZpbhMkxCNvayrK9ORPdg'
+bot = tb.TeleBot(TOKEN)
 
-bot = tb.TeleBot('1758515314:AAEqq2SHa68K51OZpbhMkxCNvayrK9ORPdg')
+
+server = Flask(__name__)
+
+
+@server.route('/' + TOKEN, methods=['POST'])
+def getMessage():
+    json_string = request.get_data().decode('utf-8')
+    update = bot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+    return "!", 200
+
+
+@server.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url='https://your_heroku_project.com/' + TOKEN)
+    return "!", 200
+
+
+if __name__ == "__main__":
+    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
 
 user_dict = {}
 
@@ -35,7 +62,6 @@ def process_name_step(message):
         bot.reply_to(message, 'Try again')
 
 
-@bot.message_handler(content_types=["text"])
 def choose_button(message):
     try:
         if message.text == 'Add new game':
@@ -66,8 +92,31 @@ def delete_game(message):
         bot.reply_to(message, 'Try again')
 
 
+def send_message1():
+    bot.send_message(432131247, check())
+
+
+schedule.every().day.at('00:03').do(send_message1)
+
+
+class ScheduleMessage():
+    def try_send_schedule():
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+    def start_process():
+        p1 = Process(target=ScheduleMessage.try_send_schedule, args=())
+        p1.start()
+
+
+if __name__ == '__main__':
+    ScheduleMessage.start_process()
+    try:
+        bot.polling(none_stop=True)
+    except:
+        pass
 
 
 bot.enable_save_next_step_handlers(delay=2)
 bot.load_next_step_handlers()
-bot.polling()
