@@ -4,32 +4,8 @@ from ps_store_ds import add, delete, check
 import schedule
 import time
 from multiprocessing.context import Process
-from flask import Flask, request
-import os
 TOKEN = '1758515314:AAEqq2SHa68K51OZpbhMkxCNvayrK9ORPdg'
 bot = tb.TeleBot(TOKEN)
-
-
-server = Flask(__name__)
-
-
-@server.route('/' + TOKEN, methods=['POST'])
-def getMessage():
-    json_string = request.get_data().decode('utf-8')
-    update = bot.types.Update.de_json(json_string)
-    bot.process_new_updates([update])
-    return "!", 200
-
-
-@server.route("/")
-def webhook():
-    bot.remove_webhook()
-    bot.set_webhook(url='https://your_heroku_project.com/' + TOKEN)
-    return "!", 200
-
-
-if __name__ == "__main__":
-    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
 
 user_dict = {}
 
@@ -120,3 +96,4 @@ if __name__ == '__main__':
 
 bot.enable_save_next_step_handlers(delay=2)
 bot.load_next_step_handlers()
+bot.polling()
