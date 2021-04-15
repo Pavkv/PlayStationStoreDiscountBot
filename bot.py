@@ -21,88 +21,11 @@ class User:
         self.login = login
 
 
-@bot.message_handler(commands=['start', 'help'])
-def menu(message):
-    bot.send_message(message.chat.id, 'Welcome to your ps games discount bot')
-    msg = bot.reply_to(message, 'Write your login')
-    bot.register_next_step_handler(msg, process_name_step)
-
-
-def process_name_step(message):
-    try:
-        chat_id = message.chat.id
-        login = message.text
-        user = User(login)
-        user_dict[chat_id] = user
-        start_menu = types.ReplyKeyboardMarkup(row_width=1)
-        fk = types.KeyboardButton(text='Add new game')
-        sk = types.KeyboardButton(text='Delete game')
-        start_menu.add(fk, sk)
-        msg = bot.reply_to(message, 'What you want to do?', reply_markup=start_menu)
-    except Exception as e:
-        bot.reply_to(message, 'Try again')
-
-
-def choose_button(message):
-    try:
-        if message.text == 'Add new game':
-            msg = bot.reply_to(message, 'Write game name')
-            bot.register_next_step_handler(msg, add_new_game)
-        elif message.text == 'Delete game':
-            msg = bot.reply_to(message, 'Write game name')
-            bot.register_next_step_handler(msg, delete_game)
-    except Exception as e:
-        bot.reply_to(message, 'Try again')
-
-
-def add_new_game(message):
-    try:
-        if message.text:
-            game = str(message.text)
-            bot.reply_to(message, add(game))
-    except Exception as e:
-        bot.reply_to(message, 'Try again')
-
-
-def delete_game(message):
-    try:
-        if message.text:
-            game = str(message.text)
-            bot.reply_to(message, delete(game))
-    except Exception as e:
-        bot.reply_to(message, 'Try again')
-
-
-def send_message1():
-    bot.send_message(432131247, check)
-
-
-schedule.every().day.at('00:03').do(send_message1)
-
-
-class ScheduleMessage():
-    def try_send_schedule():
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-
-    def start_process():
-        p1 = Process(target=ScheduleMessage.try_send_schedule, args=())
-        p1.start()
-
-
-if __name__ == '__main__':
-    ScheduleMessage.start_process()
-    try:
-        bot.polling(none_stop=True)
-    except:
-        pass
-
-
-bot.enable_save_next_step_handlers(delay=2)
-bot.load_next_step_handlers()
-bot.polling()
-
+# con = sl.connect('ps_store_discounts_1.db')
+# with con:
+#     cur = con.cursor()
+#     cur.execute("CREATE TABLE IF NOT EXISTS `GAMES` (Game_Name TEXT, Base_Price TEXT, Plus_Price TEXT, Discount_Price TEXT, Discounted_Until TEXT)")
+#     con.commit()
 
 def add(game):
     ps_games = sl.connect('ps_store_discounts.db')
@@ -212,3 +135,88 @@ def check():
                 return 'Is now on sale: ' + s
             else:
                 return 'Are now on sales: ' + s
+
+
+@bot.message_handler(commands=['start', 'help'])
+def menu(message):
+    bot.send_message(message.chat.id, 'Welcome to your ps games discount bot')
+    msg = bot.reply_to(message, 'Write your login')
+    bot.register_next_step_handler(msg, process_name_step)
+
+
+def process_name_step(message):
+    try:
+        chat_id = message.chat.id
+        login = message.text
+        user = User(login)
+        user_dict[chat_id] = user
+        start_menu = types.ReplyKeyboardMarkup(row_width=1)
+        fk = types.KeyboardButton(text='Add new game')
+        sk = types.KeyboardButton(text='Delete game')
+        start_menu.add(fk, sk)
+        msg = bot.reply_to(message, 'What you want to do?', reply_markup=start_menu)
+    except Exception as e:
+        bot.reply_to(message, 'Try again')
+
+
+@bot.message_handler(content_types=["text"])
+def choose_button(message):
+    try:
+        if message.text == 'Add new game':
+            msg = bot.reply_to(message, 'Write game name')
+            bot.register_next_step_handler(msg, add_new_game)
+        elif message.text == 'Delete game':
+            msg = bot.reply_to(message, 'Write game name')
+            bot.register_next_step_handler(msg, delete_game)
+    except Exception as e:
+        bot.reply_to(message, 'Try again')
+
+
+def add_new_game(message):
+    try:
+        if message.text:
+            game = str(message.text)
+            bot.reply_to(message, add(game))
+    except Exception as e:
+        bot.reply_to(message, 'Try again')
+
+
+def delete_game(message):
+    try:
+        if message.text:
+            game = str(message.text)
+            bot.reply_to(message, delete(game))
+    except Exception as e:
+        bot.reply_to(message, 'Try again')
+
+
+def send_message1():
+    bot.send_message(432131247, check())
+
+
+# schedule.every().day.at('00:03').do(send_message1)
+# schedule.every(10).seconds.do(send_message1)
+
+
+class ScheduleMessage():
+    def try_send_schedule():
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+    def start_process():
+        p1 = Process(target=ScheduleMessage.try_send_schedule, args=())
+        p1.start()
+
+
+if __name__ == '__main__':
+    ScheduleMessage.start_process()
+    try:
+        bot.polling(none_stop=True)
+    except:
+        pass
+
+
+bot.enable_save_next_step_handlers(delay=2)
+bot.load_next_step_handlers()
+bot.polling()
