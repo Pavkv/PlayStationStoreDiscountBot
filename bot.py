@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import telebot as tb
 from telebot import types
 import schedule
