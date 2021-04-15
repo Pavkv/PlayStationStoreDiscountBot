@@ -74,7 +74,7 @@ def delete_game(message):
 
 
 def send_message1():
-    bot.send_message(432131247, check())
+    bot.send_message(432131247, check)
 
 
 schedule.every().day.at('00:03').do(send_message1)
