@@ -6,9 +6,9 @@ import schedule
 import time
 from multiprocessing.context import Process
 import requests as req
-from bs4 import BeautifulSoup as bs
 import re
 import sqlite3 as sl
+import json
 
 TOKEN = '1758515314:AAEqq2SHa68K51OZpbhMkxCNvayrK9ORPdg'
 bot = tb.TeleBot(TOKEN)
@@ -21,19 +21,37 @@ class User:
         self.login = login
 
 
-# con = sl.connect('ps_store_discounts_1.db')
-# with con:
-#     cur = con.cursor()
-#     cur.execute("CREATE TABLE IF NOT EXISTS `GAMES` (Game_Name TEXT, Base_Price TEXT, Plus_Price TEXT, Discount_Price TEXT, Discounted_Until TEXT)")
-#     con.commit()
+def collect_game_data(data):
+    GameName = data['GameName']
+    BasePrice = data['formattedBasePrice']
+    PlusPrice = data['formattedPlusPrice']
+    DiscountPrice = data['formattedSalePrice']
+    DiscountedUntil = data['DiscountedUntil']
+    if DiscountPrice == BasePrice or DiscountPrice == PlusPrice:
+        DiscountPrice = 0
+        DiscountedUntil = 0
+    return GameName, BasePrice, PlusPrice, DiscountPrice, DiscountedUntil
+
+
+def check_game_name(game):
+    url = 'https://platprices.com/api.php?key=4SGYBOeNA7S2ADj4rBaolWhRPQkrw1pK&name=' + game + '&region=ru'
+    resp = req.get(url)
+    data = json.loads(resp.text)
+    if not data:
+        return 'Incorrect Game name, please write again'
+    elif data['error'] == 3:
+        return 'Game was not found'
+    else:
+        return data
+
 
 def add(game):
+    if type(check_game_name(game)) == dict:
+        GameName, BasePrice, PlusPrice, DiscountPrice, DiscountedUntil = collect_game_data(check_game_name(game))
+    else:
+        return check_game_name(game)
     ps_games = sl.connect('ps_store_discounts.db')
-    url = 'https://platprices.com/api.php?key=4SGYBOeNA7S2ADj4rBaolWhRPQkrw1pK&name=' + game + '&region=ru'
     count = False
-    resp = req.get(url)
-    soup = bs(resp.text, 'lxml')
-    text = str(soup.body).split(',')
     with ps_games:
         data = ps_games.execute("SELECT Game_Name FROM GAMES")
         game1 = re.sub(r"\s+", '', game)
@@ -42,25 +60,6 @@ def add(game):
                     or game1.lower().__contains__(str(d[0]).lower()) or str(d[0]).lower().__contains__(game1.lower()):
                 count = True
                 return 'Game already existed'
-    if not text:
-        return 'Incorrect Game name, please write again'
-    for txt in text:
-        if txt.__contains__("Game/product not found."):
-            return 'Game was not found'
-    for txt in text:
-        txt = re.sub(r'"', '', txt)
-        if txt.__contains__('GameName'):
-            txt = txt.split(':')
-            GameName = txt[1]
-            continue
-        elif txt.__contains__('formattedBasePrice'):
-            txt = txt.split(':')
-            BasePrice = txt[1]
-            continue
-        elif txt.__contains__('formattedPlusPrice'):
-            txt = txt.split(':')
-            PlusPrice = txt[1]
-            continue
     if not count:
         sql = 'INSERT INTO GAMES (Game_Name, Base_Price, Plus_Price, Discount_Price, Discounted_Until) values(?, ?, ?, ?, ?)'
         data = [
@@ -88,37 +87,11 @@ def check():
     with ps_games:
         data = ps_games.execute("SELECT Game_Name FROM GAMES")
         for game in data:
-            url = 'https://platprices.com/api.php?key=4SGYBOeNA7S2ADj4rBaolWhRPQkrw1pK&name=' + ''.join(game) + '&region=ru'
-            resp = req.get(url)
-            soup = bs(resp.text, 'lxml')
-            text = str(soup.body).split(',')
-            for txt in text:
-                txt = re.sub(r'"', '', txt)
-                if txt.__contains__('GameName'):
-                    txt = txt.split(':')
-                    GameName = txt[1]
-                    continue
-                elif txt.__contains__('formattedBasePrice'):
-                    txt = txt.split(':')
-                    BasePrice = txt[1]
-                    continue
-                elif txt.__contains__('formattedPlusPrice'):
-                    txt = txt.split(':')
-                    PlusPrice = txt[1]
-                    continue
-                elif txt.__contains__('formattedSalePrice'):
-                    txt = txt.split(':')
-                    DiscountPrice = txt[1]
-                    continue
-                elif txt.__contains__('DiscountedUntil'):
-                    txt = txt.split(':')
-                    du = txt[1]
-                    du = du.split(' ')
-                    DiscountedUntil = du[0]
-                    continue
-            if DiscountPrice == BasePrice and DiscountPrice == PlusPrice:
-                DiscountPrice = 0
-                DiscountedUntil = 0
+            if type(check_game_name(game)) == dict:
+                GameName, BasePrice, PlusPrice, DiscountPrice, DiscountedUntil = collect_game_data(
+                    check_game_name(game))
+            else:
+                return check_game_name(game)
             cur = ps_games.cursor()
             cur.execute('''UPDATE GAMES SET Discount_Price = ? WHERE Game_Name = ?''', (DiscountPrice, GameName))
             cur.execute('''UPDATE GAMES SET Discounted_Until = ? WHERE Game_Name = ?''', (DiscountedUntil, GameName))
@@ -194,17 +167,13 @@ def send_message1():
     bot.send_message(432131247, check())
 
 
-# schedule.every().day.at('00:03').do(send_message1)
-# schedule.every(10).seconds.do(send_message1)
-
-
-class ScheduleMessage():
-    def try_send_schedule():
+class ScheduleMessage:
+    def try_send_schedule(self):
         while True:
             schedule.run_pending()
             time.sleep(1)
 
-    def start_process():
+    def start_process(self):
         p1 = Process(target=ScheduleMessage.try_send_schedule, args=())
         p1.start()
 
@@ -215,7 +184,6 @@ if __name__ == '__main__':
         bot.polling(none_stop=True)
     except:
         pass
-
 
 bot.enable_save_next_step_handlers(delay=2)
 bot.load_next_step_handlers()
