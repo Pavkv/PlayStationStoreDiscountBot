@@ -40,8 +40,9 @@ def add(game):
             if ''.join(d) == GameName:
                 return 'Game already existed'
     sql = 'INSERT INTO GAMES (Game_Name, Base_Price, Plus_Price, Discount_Price, Discounted_Until) values(?, ?, ?, ?, ?)'
+    base = [(GameName, BasePrice, PlusPrice, 0, 0)]
     with ps_games:
-        ps_games.executemany(sql, (GameName, BasePrice, PlusPrice, 0, 0))
+        ps_games.executemany(sql, base)
         return 'Your game was successfully added'
 
 
@@ -85,7 +86,3 @@ def check():
                 return 'Is now on sale: ' + s
             else:
                 return 'Are now on sales: ' + s
-
-
-game = "God of War"
-print(add(game))
