@@ -3,10 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../Matrix/.idea/Matrix.iml" filepath="$PROJECT_DIR$/../Matrix/.idea/Matrix.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../University/Introduction to Problem Solving and Algorithm Design/Week 2/.idea/University.iml" filepath="$PROJECT_DIR$/../../University/Introduction to Problem Solving and Algorithm Design/Week 2/.idea/University.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../University/Introduction to Problem Solving and Algorithm Design/Week 3/.idea/Week 3.iml" filepath="$PROJECT_DIR$/../../University/Introduction to Problem Solving and Algorithm Design/Week 3/.idea/Week 3.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/ps_store_api.iml" filepath="$PROJECT_DIR$/.idea/ps_store_api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../test/.idea/test.iml" filepath="$PROJECT_DIR$/../test/.idea/test.iml" />
     </modules>
   </component>
 </project>
