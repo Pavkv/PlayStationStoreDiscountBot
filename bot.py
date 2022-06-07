@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#imports
 import json
 import sqlite3 as sl
 import requests as req
