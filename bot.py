@@ -1,9 +1,12 @@
 import json
-import sqlite3 as sl
+# import sqlite3 as sl
+import os
+import psycopg2 as pg
 import requests as req
 import telebot as tb
 from telebot import types
 from apscheduler.schedulers.blocking import BlockingScheduler
+database_url = os.environ.get('jdbc:postgresql://ec2-54-165-178-178.compute-1.amazonaws.com:5432/dfoviovij8dqfv')
 
 
 def collect_game_data(data):
@@ -24,44 +27,46 @@ def check_game_name(game):
 
 
 def add(game):
+    ps_games = pg.connect(database_url)
+    cur = ps_games.cursor()
     Game = collect_game_data(check_game_name(game))
-    ps_games = sl.connect('ps_store_discounts.db')
-    with ps_games:
-        data = ps_games.execute("SELECT Game_Name FROM GAMES")
-        for game1 in data:
-            if game1[0] == Game[0]:
-                return 'Game already existed'
+    data = cur.execute("SELECT Game_Name FROM games")
+    for game1 in data:
+        if game1[0] == Game[0]:
+            return 'Game already existed'
     sql = 'INSERT INTO GAMES (Game_Name, Base_Price) values(?, ?)'
     base = [(Game[0], Game[1])]
-    with ps_games:
-        ps_games.executemany(sql, base)
-        return 'Your game was successfully added'
+    cur.execute(sql, base)
+    ps_games.close()
+    return 'Your game was successfully added'
 
 
 def delete(game):
-    ps_games = sl.connect('ps_store_discounts.db')
-    with ps_games:
-        data = ps_games.execute("SELECT Game_Name FROM GAMES")
-        for d in data:
-            if game.lower().__contains__(str(d).lower()) \
-                    or str(d).lower().__contains__(game.lower()):
-                sql = 'DELETE FROM GAMES WHERE Game_Name = ?'
-                cur = ps_games.cursor()
-                cur.execute(sql, (d[0],))
-                ps_games.commit()
-                return 'Your game was successfully delete'
+    ps_games = pg.connect(database_url)
+    cur = ps_games.cursor()
+    data = cur.execute("SELECT Game_Name FROM games")
+    for d in data:
+        if game.lower().__contains__(str(d).lower()) \
+                or str(d).lower().__contains__(game.lower()):
+            sql = 'DELETE FROM GAMES WHERE Game_Name = ?'
+            cur.execute(sql, (d[0],))
+            ps_games.commit()
+            ps_games.close()
+            return 'Your game was successfully delete'
+    ps_games.close()
     return 'There is no such game'
 
 
 def check():
-    ps_games = sl.connect('ps_store_discounts.db')
+    ps_games = pg.connect(database_url)
+    cur = ps_games.cursor()
     string = ''
-    with ps_games:
-        data = ps_games.execute("SELECT Game_Name FROM GAMES")
-        for game in data:
-            Game = check_game_name(game[0])
-            if Game['formattedBasePrice'] != Game['formattedSalePrice']:
-                string += f'{Game["ProductName"]} is on sale until {Game["DiscountedUntil"]} for {Game["formattedSalePrice"]}/{Game["formattedBasePrice"]}\n'
+    data = cur.execute("SELECT Game_Name FROM games")
+    for game in data:
+        Game = check_game_name(game[0])
+        if Game['formattedBasePrice'] != Game['formattedSalePrice']:
+            string += f'{Game["ProductName"]} is on sale until {Game["DiscountedUntil"]} for {Game["formattedSalePrice"]}/{Game["formattedBasePrice"]}\n'
+    ps_games.close()
     if string:
         return string
     else:
@@ -74,17 +79,17 @@ class User:
         self.user_id = _user_id
 
     def check_user(self):
-        ps_ids = sl.connect('ps_store_discounts.db')
-        with ps_ids:
-            data = ps_ids.execute("SELECT user_id FROM USER_IDS")
-            for id in data:
-                if id == self.user_id:
-                    return
-            sql = 'INSERT INTO USER_IDS (user_id, user_name) values(?, ?)'
-            base = [(self.user_id, self.user)]
-            with ps_ids:
-                ps_ids.executemany(sql, base)
-            return
+        ps_games = pg.connect(database_url)
+        cur = ps_games.cursor()
+        data = cur.execute("SELECT user_id FROM USER_IDS")
+        for id in data:
+            if id == self.user_id:
+                return
+        sql = 'INSERT INTO USER_IDS (user_id, user_name) values(?, ?)'
+        base = [(self.user_id, self.user)]
+        cur.executemany(sql, base)
+        ps_games.close()
+        return
 
 
 def main():
@@ -143,11 +148,12 @@ def main():
     scheduler = BlockingScheduler()
 
     def check_discount():
-        ps_ids = sl.connect('ps_store_discounts.db')
-        with ps_ids:
-            data = ps_ids.execute("SELECT user_id FROM USER_IDS")
-            for id in data:
-                bot.send_message(id[0], check())
+        ps_games = pg.connect(database_url)
+        cur = ps_games.cursor()
+        data = cur.execute("SELECT user_id FROM USER_IDS")
+        for id in data:
+            bot.send_message(id[0], check())
+        ps_games.close()
 
     scheduler.add_job(check_discount, 'cron', day_of_week='mon', timezone='US/Eastern', hour=13)
     scheduler.start()
@@ -158,4 +164,3 @@ def main():
 
 
 main()
-
