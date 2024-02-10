@@ -1,2 +1,4 @@
-requests==2.27.1
+requests==2.31.0
 APScheduler==3.9.1
+telebot~=0.0.5
+python-dotenv~=1.0.1
