@@ -65,7 +65,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]]()
+<img src="images/example_screenshot.png" alt="example">
 
 The PS Store Bot is a Telegram bot designed to help users keep track of PlayStation Store game discounts, manage their wishlist of games, and receive updates on price changes. It leverages the PlatPrices API for real-time data on game prices and discounts.
 
@@ -186,4 +186,4 @@ Project Link: [https://github.com/Pavkv/PlayStationStoreDiscountBot]([https://gi
 [license-url]: https://github.com/Pavkv/PlayStationStoreDiscountBot/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/pavel-zobov-3a6365230/
-[product-screenshot]: images\example%20screenshot.png
+[product-screenshot]: images\example_screenshot.png
